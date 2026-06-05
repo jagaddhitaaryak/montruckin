@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Outstanding Timbang 2 & Parkir DCO</title>
 
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS (Via CDNJS - Aman dari Blokir Kantor) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     
-    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/rowgroup/1.4.1/css/rowGroup.bootstrap5.min.css" rel="stylesheet">
+    <!-- DataTables CSS & RowGroup (Via CDNJS) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-bs5/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-rowgroup-bs5/1.4.1/rowGroup.bootstrap5.min.css" rel="stylesheet">
     
+    <!-- FontAwesome (Via CDNJS) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -70,11 +74,13 @@
 </head>
 <body>
 
+    <!-- Sticky Header -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid px-4">
             <a class="navbar-brand" href="#"><i class="fa-solid fa-truck-fast text-primary me-2"></i>Dashboard Monitoring</a>
             
             <div class="d-flex align-items-center gap-3">
+                <!-- Dropdown Riwayat Firestore -->
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-primary text-white"><i class="fa-solid fa-cloud-arrow-down"></i></span>
                     <select id="historySelect" class="form-select history-select" onchange="loadDataFromFirestore(this.value)">
@@ -91,19 +97,23 @@
         </div>
     </nav>
 
+    <!-- Loader -->
     <div id="loader">
         <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
         <h5 class="text-muted" id="loaderText">Membaca dan Memproses Data...</h5>
     </div>
 
+    <!-- Empty State -->
     <div id="emptyState" class="container mt-5 text-center py-5">
         <i class="fa-solid fa-database text-muted" style="font-size: 5rem; opacity: 0.5;"></i>
         <h3 class="mt-4 text-muted">Belum Ada Data Hari Ini</h3>
         <p class="text-muted">Sistem tidak menemukan riwayat hari ini. Silakan upload file Excel Transaksi IML untuk memulai monitoring.</p>
     </div>
 
+    <!-- Main Dashboard -->
     <div id="dashboardContainer" class="container-fluid px-4 mt-4 dashboard-container">
         
+        <!-- Global Statistics -->
         <div class="row mb-4">
             <div class="col-md-2 col-sm-6 mb-3">
                 <div class="card card-kpi bg-dark text-white h-100">
@@ -165,14 +175,16 @@
 
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.css"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/rowgroup/1.4.1/js/dataTables.rowGroup.min.js"></script>
+    <!-- Scripts (Semua dialihkan ke CDNJS untuk menghindari blokir firewall kantor) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net/1.13.6/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-bs5/1.13.6/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-rowgroup/1.4.1/dataTables.rowGroup.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
@@ -239,7 +251,7 @@
                             <div class="card-header bg-secondary text-white fw-bold py-2"><i class="fa-solid fa-chart-simple me-1"></i> SUMMARY ${g.id}</div>
                             <div class="card-body p-2 d-flex justify-content-around align-items-center">
                                 <div class="text-center"><span class="kpi-title text-dark d-block">TOTAL UNIT</span><span class="fs-2 fw-bold text-dark" id="kpi${g.id}_Unit">0</span></div>
-                                <div class="text-center"><span class="kpi-title text-danger d-block">DURASI TERLAMA</span><span class="fs-4 fw-bold text-danger" id="kpi${g.id}_Max">-</span></div>
+                                <div class="text-center"><span class="kpi-title text-danger d-block">MAX DURASI</span><span class="fs-4 fw-bold text-danger" id="kpi${g.id}_Max">-</span></div>
                             </div>
                         </div>
                     </div>
