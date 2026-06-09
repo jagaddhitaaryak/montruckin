@@ -5,19 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Outstanding Timbang 2 & Parkir DCO</title>
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Bootstrap 5 CSS (Via CDNJS - Aman dari Blokir Kantor) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- DataTables CSS & RowGroup (Via CDNJS) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-bs5/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-rowgroup-bs5/1.4.1/rowGroup.bootstrap5.min.css" rel="stylesheet">
     
-    <!-- FontAwesome (Via CDNJS) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -25,6 +21,7 @@
             --bm3-color: #0d6efd;
             --pm1-color: #198754;
             --bu17-color: #fd7e14;
+            --crumb-color: #6f42c1; 
             --bg-color: #f4f7fa;
         }
 
@@ -33,19 +30,83 @@
         .navbar { background-color: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
         .navbar-brand { font-weight: 700; color: #2c3e50 !important; font-size: 1.4rem; }
 
-        .card-kpi { border: none; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); transition: transform 0.3s; }
+        .card-kpi { 
+            border: none; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04); 
+            transition: transform 0.2s; 
+            position: relative;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
         .card-kpi:hover { transform: translateY(-3px); }
-        .kpi-title { font-size: 0.85rem; color: #6c757d; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
-        .kpi-value { font-size: 1.8rem; font-weight: 700; margin-top: 5px; color: #2c3e50; }
-        .kpi-icon { font-size: 2.5rem; opacity: 0.2; position: absolute; right: -10px; bottom: -10px; }
+        
+        .kpi-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem;
+        }
+
+        .kpi-content {
+            flex-grow: 1;
+            z-index: 2;
+        }
+
+        .kpi-title { 
+            font-size: 0.75rem; 
+            color: #6c757d; 
+            text-transform: uppercase; 
+            font-weight: 600; 
+            letter-spacing: 0.8px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .kpi-value { 
+            font-size: 1.8rem; 
+            font-weight: 700; 
+            color: #2c3e50;
+            line-height: 1.2;
+        }
+
+        .kpi-icon-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.04);
+            margin-left: 10px;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .kpi-icon-wrapper i {
+            font-size: 1.4rem;
+            opacity: 0.75;
+        }
+
+        .bg-icon-dark { background-color: rgba(33, 37, 41, 0.1); color: #212529; }
+        .bg-icon-info { background-color: rgba(13, 202, 240, 0.15); color: #0dcaf0; }
+        .bg-icon-warning { background-color: rgba(255, 193, 7, 0.15); color: #ffc107; }
+        .bg-icon-bm3 { background-color: rgba(13, 110, 253, 0.15); color: var(--bm3-color); }
+        .bg-icon-pm1 { background-color: rgba(25, 135, 84, 0.15); color: var(--pm1-color); }
+        .bg-icon-bu17 { background-color: rgba(253, 126, 20, 0.15); color: var(--bu17-color); }
+        .bg-icon-crumb { background-color: rgba(111, 66, 193, 0.15); color: var(--crumb-color); }
 
         .gudang-section { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); position: relative; }
         .header-bm3 { border-top: 5px solid var(--bm3-color); }
         .header-pm1 { border-top: 5px solid var(--pm1-color); }
         .header-bu17 { border-top: 5px solid var(--bu17-color); }
+        .header-crumb { border-top: 5px solid var(--crumb-color); }
         .title-bm3 { color: var(--bm3-color); }
         .title-pm1 { color: var(--pm1-color); }
         .title-bu17 { color: var(--bu17-color); }
+        .title-crumb { color: var(--crumb-color); }
 
         .table { font-size: 0.85rem; }
         .table thead th { background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; color: #495057; font-weight: 600; white-space: nowrap; }
@@ -65,6 +126,7 @@
         tr.dtrg-group td { font-size: 1rem; letter-spacing: 1px; border-bottom: 2px solid #fff; padding: 10px !important; }
         .grp-parkir { background-color: #17a2b8 !important; }
         .grp-timbang { background-color: #6c757d !important; }
+        .grp-customer { background-color: #6f42c1 !important; }
 
         #loader { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
         .dashboard-container { display: none; }
@@ -74,13 +136,11 @@
 </head>
 <body>
 
-    <!-- Sticky Header -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid px-4">
             <a class="navbar-brand" href="#"><i class="fa-solid fa-truck-fast text-primary me-2"></i>Dashboard Monitoring</a>
             
             <div class="d-flex align-items-center gap-3">
-                <!-- Dropdown Riwayat Firestore -->
                 <div class="input-group input-group-sm">
                     <span class="input-group-text bg-primary text-white"><i class="fa-solid fa-cloud-arrow-down"></i></span>
                     <select id="historySelect" class="form-select history-select" onchange="loadDataFromFirestore(this.value)">
@@ -89,93 +149,169 @@
                 </div>
 
                 <span class="text-muted small" id="lastUpdate"><i class="fa-regular fa-clock me-1"></i>Menunggu Data...</span>
-                
                 <div class="vr"></div>
-                
                 <input type="file" id="fileUpload" class="form-control form-control-sm w-auto border-success" accept=".xlsx, .xls, .csv">
             </div>
         </div>
     </nav>
 
-    <!-- Loader -->
     <div id="loader">
         <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
         <h5 class="text-muted" id="loaderText">Membaca dan Memproses Data...</h5>
     </div>
 
-    <!-- Empty State -->
     <div id="emptyState" class="container mt-5 text-center py-5">
         <i class="fa-solid fa-database text-muted" style="font-size: 5rem; opacity: 0.5;"></i>
         <h3 class="mt-4 text-muted">Belum Ada Data Hari Ini</h3>
         <p class="text-muted">Sistem tidak menemukan riwayat hari ini. Silakan upload file Excel Transaksi IML untuk memulai monitoring.</p>
     </div>
 
-    <!-- Main Dashboard -->
     <div id="dashboardContainer" class="container-fluid px-4 mt-4 dashboard-container">
         
-        <!-- Global Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-2 col-sm-6 mb-3">
-                <div class="card card-kpi bg-dark text-white h-100">
-                    <div class="card-body position-relative">
-                        <div class="kpi-title text-light">Total Seluruh Antrian</div>
-                        <div class="kpi-value text-white" id="kpiTotal">0</div>
-                        <i class="fa-solid fa-truck-ramp-box kpi-icon"></i>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-3 g-3 mb-4">
+            
+            <div class="col">
+                <div class="card card-kpi border-start border-primary border-3 h-100">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Parkir DCO - PM3</div>
+                            <div class="kpi-value text-primary" id="kpiTop_DCO_BM3">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-bm3"><i class="fa-solid fa-square-parking"></i></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-2 col-sm-6 mb-3">
-                <div class="card card-kpi h-100 border-info border">
-                    <div class="card-body position-relative">
-                        <div class="kpi-title text-info">Total Parkir DCO</div>
-                        <div class="kpi-value text-dark" id="kpiTotalDCO">0</div>
-                        <i class="fa-solid fa-square-parking kpi-icon text-info"></i>
+            <div class="col">
+                <div class="card card-kpi border-start border-primary border-3 h-100">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Belum Timbang 2 - PM3</div>
+                            <div class="kpi-value text-primary" id="kpiTop_TB2_BM3">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-bm3"><i class="fa-solid fa-scale-balanced"></i></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-2 col-sm-6 mb-3">
-                <div class="card card-kpi h-100 border-warning border">
-                    <div class="card-body position-relative">
-                        <div class="kpi-title text-warning text-darken">Total Belum Timbang 2</div>
-                        <div class="kpi-value text-dark" id="kpiTotalTB2">0</div>
-                        <i class="fa-solid fa-scale-balanced kpi-icon text-warning"></i>
+            <div class="col">
+                <div class="card card-kpi border-start border-primary border-3 h-100">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Total Antrian - PM3</div>
+                            <div class="kpi-value text-primary" id="kpiTop_Total_BM3">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-bm3"><i class="fa-solid fa-truck-ramp-box"></i></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-2 col-sm-6 mb-3">
-                <div class="card card-kpi h-100" style="background-color: #e7f1ff;">
-                    <div class="card-body position-relative">
-                        <div class="kpi-title title-bm3">Total BM3</div>
-                        <div class="kpi-value" id="kpiTotalBM3">0</div>
-                        <i class="fa-solid fa-warehouse kpi-icon title-bm3"></i>
+
+            <div class="col">
+                <div class="card card-kpi border-start border-success border-3 h-100">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Parkir DCO - PM1</div>
+                            <div class="kpi-value text-success" id="kpiTop_DCO_PM1">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-pm1"><i class="fa-solid fa-square-parking"></i></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-2 col-sm-6 mb-3">
-                <div class="card card-kpi h-100" style="background-color: #d1e7dd;">
-                    <div class="card-body position-relative">
-                        <div class="kpi-title title-pm1">Total PM1</div>
-                        <div class="kpi-value" id="kpiTotalPM1">0</div>
-                        <i class="fa-solid fa-warehouse kpi-icon title-pm1"></i>
+            <div class="col">
+                <div class="card card-kpi border-start border-success border-3 h-100">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Belum Timbang 2 - PM1</div>
+                            <div class="kpi-value text-success" id="kpiTop_TB2_PM1">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-pm1"><i class="fa-solid fa-scale-balanced"></i></div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-2 col-sm-6 mb-3">
-                <div class="card card-kpi h-100" style="background-color: #ffe8d6;">
-                    <div class="card-body position-relative">
-                        <div class="kpi-title title-bu17">Total BU17</div>
-                        <div class="kpi-value" id="kpiTotalBU17">0</div>
-                        <i class="fa-solid fa-warehouse kpi-icon title-bu17"></i>
+            <div class="col">
+                <div class="card card-kpi border-start border-success border-3 h-100">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Total Antrian - PM1</div>
+                            <div class="kpi-value text-success" id="kpiTop_Total_PM1">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-pm1"><i class="fa-solid fa-truck-ramp-box"></i></div>
                     </div>
                 </div>
             </div>
+
+            <div class="col">
+                <div class="card card-kpi border-start border-3 h-100" style="border-color: var(--crumb-color) !important;">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Parkir DCO - CRUMB PULP</div>
+                            <div class="kpi-value" style="color: var(--crumb-color);" id="kpiTop_DCO_CRUMB">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-crumb"><i class="fa-solid fa-square-parking"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card card-kpi border-start border-3 h-100" style="border-color: var(--crumb-color) !important;">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Belum Timbang 2 - CRUMB PULP</div>
+                            <div class="kpi-value" style="color: var(--crumb-color);" id="kpiTop_TB2_CRUMB">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-crumb"><i class="fa-solid fa-scale-balanced"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card card-kpi border-start border-3 h-100" style="border-color: var(--crumb-color) !important;">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Total Antrian - CRUMB PULP</div>
+                            <div class="kpi-value" style="color: var(--crumb-color);" id="kpiTop_Total_CRUMB">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-crumb"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card card-kpi border-start border-3 h-100" style="border-color: var(--bu17-color) !important;">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Parkir DCO - BU17</div>
+                            <div class="kpi-value" style="color: var(--bu17-color);" id="kpiTop_DCO_BU17">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-bu17"><i class="fa-solid fa-square-parking"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card card-kpi border-start border-3 h-100" style="border-color: var(--bu17-color) !important;">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Belum Timbang 2 - BU17</div>
+                            <div class="kpi-value" style="color: var(--bu17-color);" id="kpiTop_TB2_BU17">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-bu17"><i class="fa-solid fa-scale-balanced"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card card-kpi border-start border-3 h-100" style="border-color: var(--bu17-color) !important;">
+                    <div class="kpi-container">
+                        <div class="kpi-content">
+                            <div class="kpi-title">Total Antrian - BU17</div>
+                            <div class="kpi-value" style="color: var(--bu17-color);" id="kpiTop_Total_BU17">0</div>
+                        </div>
+                        <div class="kpi-icon-wrapper bg-icon-bu17"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
         <div id="sectionsContainer"></div>
 
     </div>
 
-    <!-- Scripts (Semua dialihkan ke CDNJS untuk menghindari blokir firewall kantor) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net/1.13.6/jquery.dataTables.min.js"></script>
@@ -184,7 +320,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
@@ -208,9 +343,11 @@
         // ==========================================
         // INIT GUDANG HTML
         // ==========================================
+        // Diubah menjadi PM3 untuk nama label di interface
         const gudangList = [
-            { id: 'BM3', title: 'FG BM3', classPrefix: 'bm3' },
+            { id: 'BM3', title: 'FG PM3', classPrefix: 'bm3' },
             { id: 'PM1', title: 'FG PM1 WHITE PAPER', classPrefix: 'pm1' },
+            { id: 'CRUMB', title: 'CRUMB PULP FINISHED GOOD', classPrefix: 'crumb' },
             { id: 'BU17', title: 'FG BU17', classPrefix: 'bu17' }
         ];
 
@@ -223,7 +360,7 @@
                     <div class="action-buttons d-flex gap-2">
                         <button class="btn btn-outline-success btn-sm" onclick="exportExcel('${g.id}')"><i class="fa-solid fa-file-excel me-1"></i> Excel</button>
                         <button class="btn btn-success btn-sm" onclick="exportWA('${g.id}')"><i class="fa-brands fa-whatsapp me-1"></i> Teks WA</button>
-                        <button class="btn btn-primary btn-sm" onclick="downloadImage('${g.id}')"><i class="fa-solid fa-image me-1"></i> Gambar SS</button>
+                        <button class="btn btn-primary btn-sm" onclick="downloadImage('${g.id}')"><i class="fa-solid fa-image me-1"></i> Gambar</button>
                     </div>
                 </div>
                 
@@ -251,7 +388,7 @@
                             <div class="card-header bg-secondary text-white fw-bold py-2"><i class="fa-solid fa-chart-simple me-1"></i> SUMMARY ${g.id}</div>
                             <div class="card-body p-2 d-flex justify-content-around align-items-center">
                                 <div class="text-center"><span class="kpi-title text-dark d-block">TOTAL UNIT</span><span class="fs-2 fw-bold text-dark" id="kpi${g.id}_Unit">0</span></div>
-                                <div class="text-center"><span class="kpi-title text-danger d-block">DURASI TERLAMA</span><span class="fs-4 fw-bold text-danger" id="kpi${g.id}_Max">-</span></div>
+                                <div class="text-center"><span class="kpi-title text-danger d-block">MAX DURASI</span><span class="fs-4 fw-bold text-danger" id="kpi${g.id}_Max">-</span></div>
                             </div>
                         </div>
                     </div>
@@ -270,7 +407,7 @@
         // ==========================================
         // STATE & CORE LOGIC
         // ==========================================
-        let appData = { BM3: [], PM1: [], BU17: [] };
+        let appData = { BM3: [], PM1: [], CRUMB: [], BU17: [] };
         let tables = {};
         let refreshInterval = null;
 
@@ -282,9 +419,16 @@
             { data: 'Gudang', title: 'Gudang' },
             { data: 'Ekspedisi', title: 'Ekspedisi' },
             { data: 'Jenis Kendaraan', title: 'Jenis Kendaraan' },
-            { data: 'Supplier', title: 'Supplier' },
+            { data: 'Supplier', title: 'Customer / Supplier' },
             { data: 'Tanggal Timbang 1', title: 'Tanggal Timbang 1' },
             { data: 'Tanggal Timbang 2', title: 'Tanggal Timbang 2' },
+            { 
+                data: 'Status', title: 'Status',
+                render: function(data) {
+                    if(data === 'PARKIR DCO') return '<span class="badge bg-info text-dark border"><i class="fa-solid fa-square-parking me-1"></i>PARKIR DCO</span>';
+                    return '<span class="badge bg-warning text-dark border"><i class="fa-solid fa-scale-balanced me-1"></i>BELUM TIMBANG 2</span>';
+                }
+            },
             { 
                 data: 'Type', title: 'Type',
                 render: function(data) {
@@ -378,7 +522,7 @@
             if(!docId) return;
             
             document.getElementById('loader').style.display = 'flex';
-            document.getElementById('loaderText').innerText = "Memuat data dari server baru...";
+            document.getElementById('loaderText').innerText = "Memuat data dari server...";
 
             try {
                 const doc = await db.collection('history_monitoring').doc(docId).get();
@@ -387,9 +531,10 @@
                     
                     appData.BM3 = d.dataBM3 || [];
                     appData.PM1 = d.dataPM1 || [];
+                    appData.CRUMB = d.dataCRUMB || []; 
                     appData.BU17 = d.dataBU17 || [];
 
-                    ['BM3', 'PM1', 'BU17'].forEach(g => {
+                    ['BM3', 'PM1', 'CRUMB', 'BU17'].forEach(g => {
                         appData[g].forEach(r => { r.DurasiMenit = getMinutesDiff(r.WaktuMulai); });
                     });
 
@@ -414,6 +559,7 @@
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     dataBM3: appData.BM3,
                     dataPM1: appData.PM1,
+                    dataCRUMB: appData.CRUMB,
                     dataBU17: appData.BU17
                 };
 
@@ -429,7 +575,7 @@
         };
 
         // ==========================================
-        // EXCEL PROCESSING
+        // EXCEL PROCESSING & FILTER LOGIC
         // ==========================================
         document.getElementById('fileUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -443,8 +589,21 @@
                 const data = evt.target.result;
                 const workbook = XLSX.read(data, {type: 'binary'});
                 const firstSheet = workbook.SheetNames[0];
-                const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: "" });
-                
+                const sheet = workbook.Sheets[firstSheet];
+
+                const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                let headerRowIndex = 0;
+                for(let i = 0; i < aoa.length; i++) {
+                    if (aoa[i] && aoa[i].length > 0) {
+                        let rowStr = aoa[i].join('').toUpperCase();
+                        if (rowStr.includes('NO IML') || rowStr.includes('NO POLISI') || rowStr.includes('TANGGAL')) {
+                            headerRowIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                const rawData = XLSX.utils.sheet_to_json(sheet, { range: headerRowIndex, defval: "" });
                 processData(rawData, file.name);
             };
             reader.readAsBinaryString(file);
@@ -453,6 +612,7 @@
         function processData(data, filename) {
             appData.BM3 = [];
             appData.PM1 = [];
+            appData.CRUMB = [];
             appData.BU17 = [];
 
             data.forEach(row => {
@@ -462,11 +622,24 @@
                 const t1 = row['Tanggal Timbang 1'] || '';
                 const t2 = row['Tanggal Timbang 2'] || row['Tanggal Timbang 2DataJadi'] || '';
 
-                if (tujuan === 'MUAT' && (!t2 || t2.toString().trim() === '') && (dco && dco.toString().trim() !== '')) {
+                const isMuat = tujuan.includes('MUAT');
+                const isCrumb = gudang.includes('CRUMB'); 
+                
+                const isBelumTimbang2 = (!t2 || t2.toString().trim() === '');
+                const isSudahDCO = (dco && dco.toString().trim() !== '');
+
+                if ((isMuat || isCrumb) && isBelumTimbang2 && isSudahDCO) {
                     let typeRaw = (row['Type'] || '-').toUpperCase().trim();
                     let isTimbang1Done = (t1 && t1.toString().trim() !== '' && t1.toString().trim() !== '-');
                     let statusTxt = isTimbang1Done ? 'BELUM TIMBANG 2' : 'PARKIR DCO';
                     let groupPrefix = isTimbang1Done ? '2_BELUM TIMBANG 2 - ' : '1_PARKIR DCO - ';
+
+                    let rawSupplier = (row['Supplier'] || 'TANPA NAMA CUSTOMER').trim();
+                    let cleanSupplierUpper = rawSupplier.toUpperCase();
+                    
+                    if (cleanSupplierUpper.includes("INDAH KIAT") && cleanSupplierUpper.includes("SERANG")) {
+                        rawSupplier = "PT. INDAH KIAT PULP AND PAPER SERANG TBK";
+                    }
 
                     let mappedRow = {
                         'No IML': row['No IML'] || '-',
@@ -476,20 +649,21 @@
                         'Gudang': row['Gudang'] || '-',
                         'Ekspedisi': row['Ekspedisi'] || '-',
                         'Jenis Kendaraan': row['Jenis Kendaraan'] || '-',
-                        'Supplier': row['Supplier'] || '-',
+                        'Supplier': rawSupplier,
                         'Tanggal Timbang 1': t1 || '-',
                         'Tanggal Timbang 2': '-',
                         'Type': typeRaw,
                         'Status': statusTxt,
                         'WaktuMulai': isTimbang1Done ? t1 : dco,
-                        'GroupKey': groupPrefix + typeRaw
+                        'GroupKey': isCrumb ? rawSupplier : (groupPrefix + typeRaw)
                     };
                     
                     mappedRow['DurasiMenit'] = getMinutesDiff(mappedRow['WaktuMulai']);
 
                     if (gudang.includes('FG BM3')) appData.BM3.push(mappedRow);
-                    else if (gudang.includes('FG PM1 WHITE PAPER')) appData.PM1.push(mappedRow);
+                    else if (gudang.includes('FG PM1') || gudang.includes('WHITE PAPER')) appData.PM1.push(mappedRow);
                     else if (gudang.includes('FG BU17')) appData.BU17.push(mappedRow);
+                    else if (isCrumb) appData.CRUMB.push(mappedRow); 
                 }
             });
 
@@ -505,7 +679,7 @@
             document.getElementById('emptyState').style.display = 'none';
             document.getElementById('dashboardContainer').style.display = 'block';
 
-            ['BM3', 'PM1', 'BU17'].forEach(g => initOrUpdateTable('table' + g, appData[g]));
+            ['BM3', 'PM1', 'CRUMB', 'BU17'].forEach(g => initOrUpdateTable('table' + g, appData[g]));
 
             updateKPIs();
             startAutoRefresh();
@@ -519,16 +693,20 @@
                 tables[tableId] = $('#' + tableId).DataTable({
                     data: dataset,
                     columns: columnsConfig,
-                    order: [[12, 'asc'], [11, 'desc']], 
+                    order: [[13, 'asc'], [12, 'desc']], 
                     rowGroup: {
                         dataSrc: 'GroupKey',
                         startRender: function (rows, group) {
-                            let title = (group || '').substring(2);
-                            let isParkir = title.includes('PARKIR DCO');
-                            let bgClass = isParkir ? 'grp-parkir' : 'grp-timbang';
-                            let icon = isParkir ? 'fa-square-parking' : 'fa-scale-balanced';
+                            if (tableId === 'tableCRUMB') {
+                                return $('<tr/>').append('<td colspan="13" class="grp-customer text-white fw-bold"><i class="fa-solid fa-building-user me-2"></i>CUSTOMER : ' + (group || 'TIDAK ADA DATA') + ' <span class="float-end">TOTAL: '+rows.count()+' UNIT MENGANTRI</span></td>');
+                            } else {
+                                let title = (group || '').substring(2);
+                                let isParkir = title.includes('PARKIR DCO');
+                                let bgClass = isParkir ? 'grp-parkir' : 'grp-timbang';
+                                let icon = isParkir ? 'fa-square-parking' : 'fa-scale-balanced';
 
-                            return $('<tr/>').append('<td colspan="12" class="'+bgClass+' text-white fw-bold"><i class="fa-solid '+icon+' me-2"></i>KATEGORI : ' + title + ' <span class="float-end">TOTAL: '+rows.count()+' UNIT</span></td>');
+                                return $('<tr/>').append('<td colspan="13" class="'+bgClass+' text-white fw-bold"><i class="fa-solid '+icon+' me-2"></i>KATEGORI : ' + title + ' <span class="float-end">TOTAL: '+rows.count()+' UNIT</span></td>');
+                            }
                         }
                     },
                     pageLength: 10,
@@ -543,44 +721,40 @@
         }
 
         function updateKPIs() {
-            const global = { Total: 0, DCO: 0, TB2: 0, BM3: 0, PM1: 0, BU17: 0 };
-            
-            ['BM3', 'PM1', 'BU17'].forEach(g => {
-                let dcoLocal = 0, dcoExport = 0, tb2Local = 0, tb2Export = 0, maxMins = 0;
+            ['BM3', 'PM1', 'CRUMB', 'BU17'].forEach(g => {
+                let dcoLocal = 0, dcoExport = 0, tb2Local = 0, tb2Export = 0, maxMins = 0, totalUnit = 0;
                 
                 appData[g].forEach(r => {
-                    global.Total++;
-                    global[g]++;
+                    totalUnit++;
                     
                     if (r.DurasiMenit > maxMins) maxMins = r.DurasiMenit;
                     
                     let type = (r.Type || '').toUpperCase();
                     if(r.Status === 'PARKIR DCO') {
-                        global.DCO++;
                         if(type.includes('LOCAL')) dcoLocal++;
                         if(type.includes('EXPORT')) dcoExport++;
                     } else {
-                        global.TB2++;
                         if(type.includes('LOCAL')) tb2Local++;
                         if(type.includes('EXPORT')) tb2Export++;
                     }
                 });
 
-                document.getElementById(`kpi${g}_Unit`).innerText = global[g];
+                // Update cards didalam Section Gudang
+                document.getElementById(`kpi${g}_Unit`).innerText = totalUnit;
                 document.getElementById(`kpi${g}_Max`).innerText = formatDurationText(maxMins);
-                
                 document.getElementById(`kpi${g}_DCO_Local`).innerText = dcoLocal;
                 document.getElementById(`kpi${g}_DCO_Export`).innerText = dcoExport;
                 document.getElementById(`kpi${g}_TB2_Local`).innerText = tb2Local;
                 document.getElementById(`kpi${g}_TB2_Export`).innerText = tb2Export;
-            });
 
-            document.getElementById('kpiTotal').innerText = global.Total;
-            document.getElementById('kpiTotalDCO').innerText = global.DCO;
-            document.getElementById('kpiTotalTB2').innerText = global.TB2;
-            document.getElementById('kpiTotalBM3').innerText = global.BM3;
-            document.getElementById('kpiTotalPM1').innerText = global.PM1;
-            document.getElementById('kpiTotalBU17').innerText = global.BU17;
+                // Update 12 Cards Global di atas (Perhitungan Gabungan)
+                let totalDco = dcoLocal + dcoExport;
+                let totalTb2 = tb2Local + tb2Export;
+                
+                document.getElementById(`kpiTop_DCO_${g}`).innerText = totalDco;
+                document.getElementById(`kpiTop_TB2_${g}`).innerText = totalTb2;
+                document.getElementById(`kpiTop_Total_${g}`).innerText = totalUnit;
+            });
         }
 
         function downloadImage(gudangId) {
@@ -620,7 +794,8 @@
 
         function exportWA(gudangCode) {
             const data = appData[gudangCode];
-            let nameMap = { 'BM3': 'FG BM3', 'PM1': 'FG PM1 WHITE PAPER', 'BU17': 'FG BU17' };
+            // Diubah menjadi PM3 untuk nama label di text Export WA
+            let nameMap = { 'BM3': 'FG PM3', 'PM1': 'FG PM1 WHITE PAPER', 'BU17': 'FG BU17', 'CRUMB': 'CRUMB PULP FINISHED GOOD' };
             const now = new Date();
             
             let text = `====================================\nMONITORING ANTRIAN KENDARAAN\nGUDANG ${nameMap[gudangCode]}\nTanggal : ${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID').substring(0,5)}\n====================================\n\n`;
@@ -636,11 +811,17 @@
             sortedData.forEach(r => {
                 if (r.GroupKey !== currentGroup) {
                     currentGroup = r.GroupKey;
-                    let title = currentGroup.substring(2);
-                    text += `\n>> KATEGORI: ${title} <<\n`;
+                    
+                    if (gudangCode === 'CRUMB') {
+                        text += `\n>> CUSTOMER: ${currentGroup} <<\n`;
+                    } else {
+                        let title = currentGroup.substring(2);
+                        text += `\n>> KATEGORI: ${title} <<\n`;
+                    }
                 }
 
                 text += `No Polisi : ${r['No Polisi']}\nSupplier  : ${r['Supplier']}\nEkspedisi : ${r['Ekspedisi']}\n`;
+                text += `Status    : ${r['Status']} (${r['Type']})\n`;
                 
                 if (r.Status === 'PARKIR DCO') text += `Tiba IKK  : ${r['Tanggal Tiba Di IKK']}\n`;
                 else text += `Timbang 1 : ${r['Tanggal Timbang 1']}\n`;
@@ -671,7 +852,7 @@
                 'Tanggal Timbang 1': r['Tanggal Timbang 1'],
                 'Durasi': formatDurationText(r['DurasiMenit']),
                 'Gudang': r['Gudang'], 'Ekspedisi': r['Ekspedisi'],
-                'Jenis Kendaraan': r['Jenis Kendaraan'], 'Supplier': r['Supplier']
+                'Jenis Kendaraan': r['Jenis Kendaraan'], 'Supplier / Customer': r['Supplier']
             }));
 
             const ws = XLSX.utils.json_to_sheet(exportArr);
@@ -683,7 +864,7 @@
         function startAutoRefresh() {
             if(refreshInterval) clearInterval(refreshInterval);
             refreshInterval = setInterval(() => {
-                ['BM3', 'PM1', 'BU17'].forEach(g => {
+                ['BM3', 'PM1', 'CRUMB', 'BU17'].forEach(g => {
                     appData[g].forEach(r => { r.DurasiMenit = getMinutesDiff(r.WaktuMulai); });
                     let dt = $('#table' + g).DataTable();
                     dt.rows().invalidate('data').draw(false);
