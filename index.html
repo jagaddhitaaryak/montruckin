@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitoring Outstanding Timbang 2 & Parkir DCO</title>
 
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- Bootstrap 5 CSS (Via CDNJS - Aman dari Blokir Kantor) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     
+    <!-- DataTables CSS & RowGroup (Via CDNJS) -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-bs5/1.13.6/dataTables.bootstrap5.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/datatables.net-rowgroup-bs5/1.4.1/rowGroup.bootstrap5.min.css" rel="stylesheet">
     
+    <!-- FontAwesome (Via CDNJS) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -136,6 +140,7 @@
 </head>
 <body>
 
+    <!-- Sticky Header -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid px-4">
             <a class="navbar-brand" href="#"><i class="fa-solid fa-truck-fast text-primary me-2"></i>Dashboard Monitoring</a>
@@ -155,21 +160,25 @@
         </div>
     </nav>
 
+    <!-- Loader -->
     <div id="loader">
         <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
         <h5 class="text-muted" id="loaderText">Membaca dan Memproses Data...</h5>
     </div>
 
+    <!-- Empty State -->
     <div id="emptyState" class="container mt-5 text-center py-5">
         <i class="fa-solid fa-database text-muted" style="font-size: 5rem; opacity: 0.5;"></i>
         <h3 class="mt-4 text-muted">Belum Ada Data Hari Ini</h3>
         <p class="text-muted">Sistem tidak menemukan riwayat hari ini. Silakan upload file Excel Transaksi IML untuk memulai monitoring.</p>
     </div>
 
+    <!-- Main Dashboard -->
     <div id="dashboardContainer" class="container-fluid px-4 mt-4 dashboard-container">
         
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-3 g-3 mb-4">
             
+            <!-- PM3 GROUP -->
             <div class="col">
                 <div class="card card-kpi border-start border-primary border-3 h-100">
                     <div class="kpi-container">
@@ -204,6 +213,7 @@
                 </div>
             </div>
 
+            <!-- PM1 GROUP -->
             <div class="col">
                 <div class="card card-kpi border-start border-success border-3 h-100">
                     <div class="kpi-container">
@@ -238,6 +248,7 @@
                 </div>
             </div>
 
+            <!-- CRUMB PULP GROUP -->
             <div class="col">
                 <div class="card card-kpi border-start border-3 h-100" style="border-color: var(--crumb-color) !important;">
                     <div class="kpi-container">
@@ -272,6 +283,7 @@
                 </div>
             </div>
 
+            <!-- BU17 GROUP -->
             <div class="col">
                 <div class="card card-kpi border-start border-3 h-100" style="border-color: var(--bu17-color) !important;">
                     <div class="kpi-container">
@@ -312,6 +324,7 @@
 
     </div>
 
+    <!-- Scripts (Aman dari Blokir Kantor / CDNJS) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables.net/1.13.6/jquery.dataTables.min.js"></script>
@@ -320,6 +333,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+    <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
@@ -343,16 +357,32 @@
         // ==========================================
         // INIT GUDANG HTML
         // ==========================================
-        // Diubah menjadi PM3 untuk nama label di interface
         const gudangList = [
-            { id: 'BM3', title: 'FG PM3', classPrefix: 'bm3' },
-            { id: 'PM1', title: 'FG PM1 WHITE PAPER', classPrefix: 'pm1' },
-            { id: 'CRUMB', title: 'CRUMB PULP FINISHED GOOD', classPrefix: 'crumb' },
-            { id: 'BU17', title: 'FG BU17', classPrefix: 'bu17' }
+            { id: 'BM3', title: 'PM3 BROWN PAPER', classPrefix: 'bm3' },
+            { id: 'PM1', title: 'PM1 WHITE PAPER', classPrefix: 'pm1' },
+            { id: 'CRUMB', title: 'CRUMB PULP', classPrefix: 'crumb' }, 
+            { id: 'BU17', title: 'BU17', classPrefix: 'bu17' }
         ];
 
         let sectionsHTML = '';
         gudangList.forEach(g => {
+            let cardBodyDCO = '';
+            let cardBodyTB2 = '';
+
+            if (g.id === 'CRUMB') {
+                cardBodyDCO = `<div class="text-center w-100"><span class="kpi-title text-primary d-block">LOCAL</span><span class="fs-2 fw-bold text-primary" id="kpi${g.id}_DCO_Local">0</span></div>`;
+                cardBodyTB2 = `<div class="text-center w-100"><span class="kpi-title text-primary d-block">LOCAL</span><span class="fs-2 fw-bold text-primary" id="kpi${g.id}_TB2_Local">0</span></div>`;
+            } else {
+                cardBodyDCO = `
+                    <div class="text-center"><span class="kpi-title text-primary d-block">LOCAL</span><span class="fs-2 fw-bold text-primary" id="kpi${g.id}_DCO_Local">0</span></div>
+                    <div class="text-center"><span class="kpi-title text-success d-block">EXPORT</span><span class="fs-2 fw-bold text-success" id="kpi${g.id}_DCO_Export">0</span></div>
+                `;
+                cardBodyTB2 = `
+                    <div class="text-center"><span class="kpi-title text-primary d-block">LOCAL</span><span class="fs-2 fw-bold text-primary" id="kpi${g.id}_TB2_Local">0</span></div>
+                    <div class="text-center"><span class="kpi-title text-success d-block">EXPORT</span><span class="fs-2 fw-bold text-success" id="kpi${g.id}_TB2_Export">0</span></div>
+                `;
+            }
+
             sectionsHTML += `
             <div class="gudang-section header-${g.classPrefix}" id="sec${g.id}">
                 <div class="d-flex justify-content-between align-items-center mb-3 header-actions">
@@ -369,8 +399,7 @@
                         <div class="card border-info h-100 shadow-sm" style="background-color: #f8fbff;">
                             <div class="card-header bg-info text-dark fw-bold py-2"><i class="fa-solid fa-square-parking me-1"></i> PARKIR DCO (Belum Timbang 1)</div>
                             <div class="card-body p-2 d-flex justify-content-around align-items-center">
-                                <div class="text-center"><span class="kpi-title text-primary d-block">LOCAL</span><span class="fs-2 fw-bold text-primary" id="kpi${g.id}_DCO_Local">0</span></div>
-                                <div class="text-center"><span class="kpi-title text-success d-block">EXPORT</span><span class="fs-2 fw-bold text-success" id="kpi${g.id}_DCO_Export">0</span></div>
+                                ${cardBodyDCO}
                             </div>
                         </div>
                     </div>
@@ -378,14 +407,13 @@
                         <div class="card border-warning h-100 shadow-sm" style="background-color: #fffdf8;">
                             <div class="card-header bg-warning text-dark fw-bold py-2"><i class="fa-solid fa-scale-balanced me-1"></i> BELUM TIMBANG 2</div>
                             <div class="card-body p-2 d-flex justify-content-around align-items-center">
-                                <div class="text-center"><span class="kpi-title text-primary d-block">LOCAL</span><span class="fs-2 fw-bold text-primary" id="kpi${g.id}_TB2_Local">0</span></div>
-                                <div class="text-center"><span class="kpi-title text-success d-block">EXPORT</span><span class="fs-2 fw-bold text-success" id="kpi${g.id}_TB2_Export">0</span></div>
+                                ${cardBodyTB2}
                             </div>
                         </div>
                     </div>
                     <div class="col-md-4 mb-2">
                         <div class="card border-secondary h-100 shadow-sm" style="background-color: #f8f9fa;">
-                            <div class="card-header bg-secondary text-white fw-bold py-2"><i class="fa-solid fa-chart-simple me-1"></i> SUMMARY ${g.id}</div>
+                            <div class="card-header bg-secondary text-white fw-bold py-2"><i class="fa-solid fa-chart-simple me-1"></i> SUMMARY ${g.id === 'CRUMB' ? 'CRUMB' : g.id}</div>
                             <div class="card-body p-2 d-flex justify-content-around align-items-center">
                                 <div class="text-center"><span class="kpi-title text-dark d-block">TOTAL UNIT</span><span class="fs-2 fw-bold text-dark" id="kpi${g.id}_Unit">0</span></div>
                                 <div class="text-center"><span class="kpi-title text-danger d-block">MAX DURASI</span><span class="fs-4 fw-bold text-danger" id="kpi${g.id}_Max">-</span></div>
@@ -621,15 +649,18 @@
                 const dco = row['Tanggal Daftar DCO'] || row['Tanggal Daftar'] || '';
                 const t1 = row['Tanggal Timbang 1'] || '';
                 const t2 = row['Tanggal Timbang 2'] || row['Tanggal Timbang 2DataJadi'] || '';
+                
+                let typeRaw = (row['Type'] || '-').toUpperCase().trim();
 
                 const isMuat = tujuan.includes('MUAT');
                 const isCrumb = gudang.includes('CRUMB'); 
-                
                 const isBelumTimbang2 = (!t2 || t2.toString().trim() === '');
                 const isSudahDCO = (dco && dco.toString().trim() !== '');
+                const isNotIntern = !typeRaw.includes('INTERN'); // FUNGSI PENGABAIAN DATA INTERN
 
-                if ((isMuat || isCrumb) && isBelumTimbang2 && isSudahDCO) {
-                    let typeRaw = (row['Type'] || '-').toUpperCase().trim();
+                // FILTER DITERAPKAN DI SINI (Data Intern langsung dibuang)
+                if ((isMuat || isCrumb) && isBelumTimbang2 && isSudahDCO && isNotIntern) {
+                    
                     let isTimbang1Done = (t1 && t1.toString().trim() !== '' && t1.toString().trim() !== '-');
                     let statusTxt = isTimbang1Done ? 'BELUM TIMBANG 2' : 'PARKIR DCO';
                     let groupPrefix = isTimbang1Done ? '2_BELUM TIMBANG 2 - ' : '1_PARKIR DCO - ';
@@ -742,18 +773,31 @@
                 // Update cards didalam Section Gudang
                 document.getElementById(`kpi${g}_Unit`).innerText = totalUnit;
                 document.getElementById(`kpi${g}_Max`).innerText = formatDurationText(maxMins);
-                document.getElementById(`kpi${g}_DCO_Local`).innerText = dcoLocal;
-                document.getElementById(`kpi${g}_DCO_Export`).innerText = dcoExport;
-                document.getElementById(`kpi${g}_TB2_Local`).innerText = tb2Local;
-                document.getElementById(`kpi${g}_TB2_Export`).innerText = tb2Export;
+                
+                let elDcoLocal = document.getElementById(`kpi${g}_DCO_Local`);
+                if(elDcoLocal) elDcoLocal.innerText = dcoLocal;
+                
+                let elDcoExport = document.getElementById(`kpi${g}_DCO_Export`);
+                if(elDcoExport) elDcoExport.innerText = dcoExport;
+                
+                let elTb2Local = document.getElementById(`kpi${g}_TB2_Local`);
+                if(elTb2Local) elTb2Local.innerText = tb2Local;
+                
+                let elTb2Export = document.getElementById(`kpi${g}_TB2_Export`);
+                if(elTb2Export) elTb2Export.innerText = tb2Export;
 
                 // Update 12 Cards Global di atas (Perhitungan Gabungan)
                 let totalDco = dcoLocal + dcoExport;
                 let totalTb2 = tb2Local + tb2Export;
                 
-                document.getElementById(`kpiTop_DCO_${g}`).innerText = totalDco;
-                document.getElementById(`kpiTop_TB2_${g}`).innerText = totalTb2;
-                document.getElementById(`kpiTop_Total_${g}`).innerText = totalUnit;
+                let kpiTopDCO = document.getElementById(`kpiTop_DCO_${g}`);
+                if(kpiTopDCO) kpiTopDCO.innerText = totalDco;
+                
+                let kpiTopTB2 = document.getElementById(`kpiTop_TB2_${g}`);
+                if(kpiTopTB2) kpiTopTB2.innerText = totalTb2;
+                
+                let kpiTopTotal = document.getElementById(`kpiTop_Total_${g}`);
+                if(kpiTopTotal) kpiTopTotal.innerText = totalUnit;
             });
         }
 
@@ -794,8 +838,7 @@
 
         function exportWA(gudangCode) {
             const data = appData[gudangCode];
-            // Diubah menjadi PM3 untuk nama label di text Export WA
-            let nameMap = { 'BM3': 'FG PM3', 'PM1': 'FG PM1 WHITE PAPER', 'BU17': 'FG BU17', 'CRUMB': 'CRUMB PULP FINISHED GOOD' };
+            let nameMap = { 'BM3': 'PM3 BROWN PAPER', 'PM1': 'PM1 WHITE PAPER', 'BU17': 'FG BU17', 'CRUMB': 'Crumb Pulp' };
             const now = new Date();
             
             let text = `====================================\nMONITORING ANTRIAN KENDARAAN\nGUDANG ${nameMap[gudangCode]}\nTanggal : ${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID').substring(0,5)}\n====================================\n\n`;
@@ -875,4 +918,4 @@
 
     </script>
 </body>
-</html>
+</html>x
