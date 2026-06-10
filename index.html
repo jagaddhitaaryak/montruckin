@@ -358,10 +358,10 @@
         // INIT GUDANG HTML
         // ==========================================
         const gudangList = [
-            { id: 'BM3', title: 'PM3 BROWN PAPER', classPrefix: 'bm3' },
-            { id: 'PM1', title: 'PM1 WHITE PAPER', classPrefix: 'pm1' },
-            { id: 'CRUMB', title: 'CRUMB PULP', classPrefix: 'crumb' }, 
-            { id: 'BU17', title: 'BU17', classPrefix: 'bu17' }
+            { id: 'BM3', title: 'FG PM3', classPrefix: 'bm3' },
+            { id: 'PM1', title: 'FG PM1 WHITE PAPER', classPrefix: 'pm1' },
+            { id: 'CRUMB', title: 'Crumb Pulp', classPrefix: 'crumb' }, 
+            { id: 'BU17', title: 'FG BU17', classPrefix: 'bu17' }
         ];
 
         let sectionsHTML = '';
@@ -656,10 +656,11 @@
                 const isCrumb = gudang.includes('CRUMB'); 
                 const isBelumTimbang2 = (!t2 || t2.toString().trim() === '');
                 const isSudahDCO = (dco && dco.toString().trim() !== '');
-                const isNotIntern = !typeRaw.includes('INTERN'); // FUNGSI PENGABAIAN DATA INTERN
+                const isNotIntern = !typeRaw.includes('INTERN'); 
+                const isNotDoNo = !typeRaw.includes('DO NO'); // FUNGSI PENGABAIAN DATA DO NO
 
-                // FILTER DITERAPKAN DI SINI (Data Intern langsung dibuang)
-                if ((isMuat || isCrumb) && isBelumTimbang2 && isSudahDCO && isNotIntern) {
+                // FILTER DITERAPKAN DI SINI (Data Intern & DO NO dibuang)
+                if ((isMuat || isCrumb) && isBelumTimbang2 && isSudahDCO && isNotIntern && isNotDoNo) {
                     
                     let isTimbang1Done = (t1 && t1.toString().trim() !== '' && t1.toString().trim() !== '-');
                     let statusTxt = isTimbang1Done ? 'BELUM TIMBANG 2' : 'PARKIR DCO';
@@ -838,7 +839,8 @@
 
         function exportWA(gudangCode) {
             const data = appData[gudangCode];
-            let nameMap = { 'BM3': 'PM3 BROWN PAPER', 'PM1': 'PM1 WHITE PAPER', 'BU17': 'FG BU17', 'CRUMB': 'Crumb Pulp' };
+            // Diubah menjadi PM3 untuk nama label di text Export WA
+            let nameMap = { 'BM3': 'FG PM3', 'PM1': 'FG PM1 WHITE PAPER', 'BU17': 'FG BU17', 'CRUMB': 'Crumb Pulp' };
             const now = new Date();
             
             let text = `====================================\nMONITORING ANTRIAN KENDARAAN\nGUDANG ${nameMap[gudangCode]}\nTanggal : ${now.toLocaleDateString('id-ID')} ${now.toLocaleTimeString('id-ID').substring(0,5)}\n====================================\n\n`;
@@ -918,4 +920,4 @@
 
     </script>
 </body>
-</html>x
+</html>
