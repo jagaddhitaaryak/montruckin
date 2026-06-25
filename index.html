@@ -86,16 +86,18 @@
         .dashboard-container { display: none; }
         .history-select { min-width: 250px; border-color: #0d6efd; background-color: #f8fbff;}
 
+
         /* ========================================================= */
         /* BOC EXPORT TABLE STYLES (NO CONTAINER 20FT, DUAL/TRIPLE PLAN)*/
         /* ========================================================= */
         .table-boc { 
             background-color: #fff; 
-            font-size: 0.95rem; 
+            font-size: 1.05rem; /* Ukuran font sedikit dibesarkan */
+            font-weight: 800 !important; /* Paksa tebal untuk semua isi tabel */
             border-collapse: separate !important; 
             border-spacing: 0;
-            border-top: 1px solid #717171;
-            border-left: 1px solid #717171;
+            border-top: 2px solid #000000; /* Garis ditebalkan dan dihitamkan */
+            border-left: 2px solid #000000;
             width: 100%;
         }
         .table-boc tr, .table-boc thead, .table-boc tbody { 
@@ -103,20 +105,16 @@
         }
         .table-boc th, .table-boc td { 
             border: none !important;
-            border-bottom: 1px solid #717171 !important; 
-            border-right: 1px solid #717171 !important; 
+            border-bottom: 2px solid #000000 !important; /* Garis sel lebih tebal */
+            border-right: 2px solid #000000 !important; 
             padding: 10px !important; 
             vertical-align: middle; 
-            background-clip: padding-box; 
+            background-clip: padding-box;
+            color: #000000 !important; /* Paksa teks warna hitam pekat */
         }
-        .table-boc th { font-weight: 700; color: #000; }
-        .table-boc td { color: #212529; font-weight: 500; background-color: #ffffff; }
+        .table-boc th { font-weight: 900 !important; color: #000; } /* Header ekstra tebal */
         
-        .plan-input { width: 55px; margin: 0 auto; text-align: center; font-weight: 700; border-color: #8fcede; font-size: 0.95rem; padding: 4px; }
-        .plan-input:focus { border-color: #0d6efd; box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25); }
-        
-        /* Input khusus Hari ke 2 dan ke 3 (View Only Design) */
-        .plan-input-view { background-color: #f8f9fa; border: 1px dashed #adb5bd; color: #6c757d; }
+        .plan-input { width: 60px; margin: 0 auto; text-align: center; font-weight: 900; border-color: #000; font-size: 1.05rem; padding: 4px; color: #000; }
         
         .spacer-row td { 
             background-color: var(--bg-color) !important; 
@@ -134,7 +132,7 @@
         table.table-boc tr.table-secondary td {
             background-color: #e2e3e5 !important;
         }
-        table.table-boc tr.row-grand-total td.text-success { color: #4cd137 !important; }
+        table.table-boc tr.row-grand-total td.text-primary { color: #0d6efd !important; }
         table.table-boc tr.row-grand-total td.text-danger { color: #ff7979 !important; }
         table.table-boc tr.row-grand-total td.text-warning { color: #fbc531 !important; }
 
@@ -764,7 +762,9 @@
                         });
                     });
                     renderBocTable();
-                    document.getElementById('lastUpdate').innerHTML = `<i class="fa-solid fa-cloud-check text-success me-1"></i> Histori (${queryDate})`;
+                    // Tampilkan keterangan update terakhir dengan detail
+                    let lastUpTime = docData.waktu_upload ? docData.waktu_upload : '-';
+                    document.getElementById('lastUpdate').innerHTML = `<i class="fa-regular fa-clock text-primary me-1"></i> Update Terakhir: <span class="fw-bold text-dark">${lastUpTime}</span>`;
                 }
             } catch(e) { 
                 console.error("Gagal load BOC", e); 
@@ -1553,11 +1553,20 @@
                     });
                 });
             });
+            
+            // Generate format lengkap: DD/MM/YYYY HH:MM:SS
+            let now = new Date();
+            let formattedTime = ("0" + now.getDate()).slice(-2) + "/" + 
+                                ("0" + (now.getMonth() + 1)).slice(-2) + "/" + 
+                                now.getFullYear() + " " + 
+                                ("0" + now.getHours()).slice(-2) + ":" + 
+                                ("0" + now.getMinutes()).slice(-2) + ":" + 
+                                ("0" + now.getSeconds()).slice(-2);
 
             const payloadData = {
                 filename: filename,
                 tanggal: queryDate, 
-                waktu_upload: new Date().toLocaleTimeString('id-ID'),
+                waktu_upload: formattedTime, // Simpan waktu lengkap
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 dataBOC: finalArr,
                 plan_pm3_tot: parseInt(document.getElementById('plan_pm3_tot').value) || 0,
