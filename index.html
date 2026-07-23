@@ -1099,7 +1099,7 @@
             let jam = String(now.getHours()).padStart(2, '0');
             let menit = String(now.getMinutes()).padStart(2, '0');
             
-            document.getElementById('noteShiftUpdate').innerHTML = `<i class="fa-solid fa-info-circle me-1"></i>Data terakhir diperbarui pada: <b>${hari}, ${tanggal} ${bulan} ${tahun} - Pukul ${jam}:${menit} WIB</b>`;
+            document.getElementById('noteShiftUpdate').innerHTML = `<i class="fa-solid fa-info-circle me-1"></i>Data terakhir diperbarui pada: ${hari}, ${tanggal} ${bulan} ${tahun} - Pukul ${jam}:${menit} WIB`;
         }
 
         // ==========================================
@@ -1109,23 +1109,83 @@
             const element = document.getElementById('shiftSummaryCard');
             const actionBtn = element.querySelector('.action-btn-shift');
             
-            document.getElementById('loaderText').innerText = "Membuat Gambar Laporan Shift..."; 
+            document.getElementById('loaderText').innerText = "Membuat Gambar Laporan Shift (Mobile Version)..."; 
             document.getElementById('loader').style.display = 'flex'; 
             
             // Sembunyikan tombol saat proses screenshot agar rapi
             actionBtn.style.display = 'none'; 
 
+            // --- TAMBAHAN: Inject CSS khusus untuk mode Gambar/WhatsApp ---
+            const tempStyle = document.createElement('style');
+            tempStyle.id = 'tempShiftPrintStyle';
+            tempStyle.innerHTML = `
+                /* Mengunci lebar elemen seperti layar HP */
+                #shiftSummaryCard {
+                    width: 1080px !important;
+                    max-width: 1080px !important;
+                    margin: 0 !important;
+                    padding: 30px !important;
+                }
+                /* Memaksa Tabel Memiliki Garis (Border) Hitam Pekat */
+                #tableShiftSummary {
+                    border-collapse: collapse !important;
+                }
+                #tableShiftSummary th, #tableShiftSummary td {
+                    font-size: 1.4rem !important; 
+                    color: #000000 !important; 
+                    font-weight: 900 !important; 
+                    border: 2px solid #000000 !important; /* Menambahkan garis kotak yang tegas */
+                }
+                #tableShiftSummary th {
+                    font-size: 1.3rem !important;
+                    background-color: #f8f9fa !important;
+                }
+                /* Catatan update di bawah tabel: Hapus Bold, jadikan Italic */
+                #noteShiftUpdate {
+                    font-size: 1.2rem !important;
+                    color: #000000 !important;
+                    font-weight: normal !important; /* Menghilangkan efek tebal */
+                    font-style: italic !important;  /* Membuat teks menjadi miring */
+                }
+                /* Sembunyikan ikon info agar lebih bersih */
+                #noteShiftUpdate i {
+                    display: none !important;
+                }
+            `;
+            document.head.appendChild(tempStyle);
+            // -------------------------------------------------------------
+
             setTimeout(() => {
-                html2canvas(element, { scale: 3, backgroundColor: '#ffffff', useCORS: true }).then(canvas => { 
+                html2canvas(element, { 
+                    scale: 2, 
+                    backgroundColor: '#ffffff', 
+                    useCORS: true,
+                    width: 1080,        // Kunci lebar canvas menjadi 1080px
+                    windowWidth: 1080   // Kunci referensi CSS ke 1080px
+                }).then(canvas => { 
                     // Tampilkan kembali tombolnya
                     actionBtn.style.display = 'inline-block'; 
                     document.getElementById('loader').style.display = 'none';
                     
+                    // Hapus CSS sementara agar dashboard kembali seperti semula
+                    if(document.getElementById('tempShiftPrintStyle')) {
+                        document.getElementById('tempShiftPrintStyle').remove();
+                    }
+
                     // Simpan gambar
                     const link = document.createElement('a'); 
                     link.download = `Laporan_Shift_DCO_${new Date().getTime()}.png`; 
-                    link.href = canvas.toDataURL('image/png'); 
+                    link.href = canvas.toDataURL('image/png', 1.0); 
                     link.click();
+                }).catch(err => {
+                    console.error("Gagal export gambar shift:", err);
+                    actionBtn.style.display = 'inline-block'; 
+                    document.getElementById('loader').style.display = 'none';
+                    // Pastikan CSS sementara tetap terhapus meski terjadi error
+                    if(document.getElementById('tempShiftPrintStyle')) {
+                        document.getElementById('tempShiftPrintStyle').remove();
+                    }
+                    alert("Terjadi kesalahan saat memproses gambar.");
                 });
             }, 800);
         }
