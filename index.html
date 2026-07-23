@@ -757,11 +757,14 @@
                     appDataTruckIn.CRUMB = d.dataCRUMB || []; 
                     appDataTruckIn.BU17 = d.dataBU17 || [];
                     
-                    // Tarik data summary shift dari server (dengan default value jika kosong)
                     appDataTruckIn.shiftSummary = d.shiftSummary || {
                         expPM3: [0,0,0], expPM1: [0,0,0],
-                        locPM3: [0,0,0], locPM1: [0,0,0], locBU17: [0,0,0], crumb: [0,0,0] // -> TAMBAHKAN BARIS INI JUGA
+                        locPM3: [0,0,0], locPM1: [0,0,0], locBU17: [0,0,0], crumb: [0,0,0] 
                     };
+
+                    // TAMBAHAN: Tarik waktu upload dari Firebase
+                    appDataTruckIn.uploadTanggal = d.tanggal; 
+                    appDataTruckIn.uploadWaktu = d.waktu_upload;
                     
                     ['BM3', 'PM1', 'CRUMB', 'BU17'].forEach(g => { 
                         appDataTruckIn[g].forEach(r => { r.DurasiMenit = getMinutesDiff(r.WaktuMulai); }); 
@@ -1087,19 +1090,27 @@
 
             document.getElementById('tbodyShiftSummary').innerHTML = html;
 
-            // --- LOGIKA WAKTU UPDATE OTOMATIS ---
-            const now = new Date();
-            const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-            const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            // --- LOGIKA WAKTU UPDATE DARI DATABASE (BUKAN WAKTU LOKAL/SEKARANG) ---
+            let tglDB = appDataTruckIn.uploadTanggal; 
+            let wktDB = appDataTruckIn.uploadWaktu;   
             
-            let hari = namaHari[now.getDay()];
-            let tanggal = now.getDate();
-            let bulan = namaBulan[now.getMonth()];
-            let tahun = now.getFullYear();
-            let jam = String(now.getHours()).padStart(2, '0');
-            let menit = String(now.getMinutes()).padStart(2, '0');
-            
-            document.getElementById('noteShiftUpdate').innerHTML = `<i class="fa-solid fa-info-circle me-1"></i>Data terakhir diperbarui pada: ${hari}, ${tanggal} ${bulan} ${tahun} - Pukul ${jam}:${menit} WIB`;
+            if (tglDB && wktDB) {
+                const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                let dateObj = new Date(tglDB);
+                
+                let tanggal = dateObj.getDate();
+                let bulan = namaBulan[dateObj.getMonth()];
+                let tahun = dateObj.getFullYear();
+                
+                // Ekstrak Jam dan Menit (mengantisipasi format titik atau titik dua dari server)
+                let timeParts = wktDB.replace(/:/g, '.').split('.');
+                let jamMenit = timeParts.length >= 2 ? `${timeParts[0]}.${timeParts[1]}` : wktDB;
+                
+                let waktuUpdate = `${tanggal} ${bulan} ${tahun} Pukul ${jamMenit}`;
+                document.getElementById('noteShiftUpdate').innerHTML = `Updated Data MLS ${waktuUpdate} Wib`;
+            } else {
+                document.getElementById('noteShiftUpdate').innerHTML = `Updated Data MLS - Wib`;
+            }
         }
 
         // ==========================================
