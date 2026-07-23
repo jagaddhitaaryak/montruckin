@@ -224,6 +224,42 @@
                 <div class="col"><div class="card card-kpi border-start border-3 h-100" style="border-color: var(--bu17-color) !important;"><div class="kpi-container"><div class="kpi-content"><div class="kpi-title">Total Antrian - BU17</div><div class="kpi-value" style="color: var(--bu17-color);" id="kpiTop_Total_BU17">0</div></div><div class="kpi-icon-wrapper bg-icon-bu17"><i class="fa-solid fa-truck-ramp-box"></i></div></div></div></div>
             </div>
             <div id="sectionsContainerTruckIn"></div>
+
+            <!-- TAMBAHAN: Container Summary DCO Per Shift -->
+            <div class="card shadow-sm border-0 rounded-4 p-3 bg-white mb-5 mt-2" id="shiftSummaryCard" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h5 class="fw-bold text-dark m-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Summary Total Kedatangan Truck (Daftar DCO)</h5>
+                    <!-- Tombol Download Gambar -->
+                    <button class="btn btn-primary btn-sm action-btn-shift shadow-sm" onclick="downloadImageShiftSummary()">
+                        <i class="fa-solid fa-image me-1"></i> Download Gambar
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover text-center align-middle w-100" id="tableShiftSummary">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" class="align-middle" style="width: 20%;">Kategori</th>
+                                <th colspan="3">Kedatangan Per Shift</th>
+                                <th rowspan="2" class="align-middle" style="width: 15%;">Total Unit</th>
+                            </tr>
+                            <tr>
+                                <th>Shift 1 (07.00 - 15.00)</th>
+                                <th>Shift 2 (15.00 - 23.00)</th>
+                                <th>Shift 3 (23.00 - 07.00)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyShiftSummary">
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Catatan Update -->
+                <div class="mt-2 text-end">
+                    <small class="text-muted fst-italic" id="noteShiftUpdate">
+                        <i class="fa-solid fa-info-circle me-1"></i>Data terakhir diperbarui pada: -
+                    </small>
+                </div>
+            </div>
+            <!-- Akhir Tambahan Container -->
         </div>
     </div>
 
@@ -677,7 +713,10 @@
                     document.getElementById('historySelect').innerHTML = selectHtml;
                     document.getElementById('dashboardContainerTruckIn').style.display = 'none';
                     document.getElementById('emptyStateTruckIn').style.display = 'block';
-                    return;
+                    
+                    // FIX: Paksa sembunyikan loading jika server belum sempat sync data terbarunya
+                    document.getElementById('loader').style.display = 'none';
+                    return; 
                 }
                 
                 let firstDocId = null;
@@ -688,11 +727,19 @@
                 });
                 
                 document.getElementById('historySelect').innerHTML = selectHtml;
-                if(firstDocId) loadDataFromFirestore(firstDocId);
+                if(firstDocId) {
+                    loadDataFromFirestore(firstDocId);
+                } else {
+                    // FIX: Fallback sembunyikan loading
+                    document.getElementById('loader').style.display = 'none';
+                }
                 
             } catch (error) { 
                 console.error("Error mengambil riwayat: ", error); 
                 alert("Gagal memuat daftar riwayat dari server.");
+                
+                // FIX: Sembunyikan loading jika terjadi error koneksi
+                document.getElementById('loader').style.display = 'none';
             }
         }
 
@@ -709,6 +756,12 @@
                     appDataTruckIn.PM1 = d.dataPM1 || []; 
                     appDataTruckIn.CRUMB = d.dataCRUMB || []; 
                     appDataTruckIn.BU17 = d.dataBU17 || [];
+                    
+                    // Tarik data summary shift dari server (dengan default value jika kosong)
+                    appDataTruckIn.shiftSummary = d.shiftSummary || {
+                        expPM3: [0,0,0], expPM1: [0,0,0],
+                        locPM3: [0,0,0], locPM1: [0,0,0], locBU17: [0,0,0], crumb: [0,0,0] // -> TAMBAHKAN BARIS INI JUGA
+                    };
                     
                     ['BM3', 'PM1', 'CRUMB', 'BU17'].forEach(g => { 
                         appDataTruckIn[g].forEach(r => { r.DurasiMenit = getMinutesDiff(r.WaktuMulai); }); 
@@ -834,7 +887,43 @@
         // 9. TRUCK IN PROCESSING
         // ==========================================
         function processDataTruckIn(data, filename) {
-            appDataTruckIn = { BM3: [], PM1: [], CRUMB: [], BU17: [] };
+            // ==============================================================
+            // 1. LOGIKA BARU: AUTO-DETECT CUT-OFF 24 JAM OPERASIONAL
+            // ==============================================================
+            let maxTime = 0;
+            // Cari data dengan jam/tanggal paling terakhir di dalam file Excel
+            data.forEach(row => {
+                let dcoStr = row['Tanggal Tiba Di IKK'] || row['Tanggal Daftar DCO'] || row['Tanggal Daftar'] || '';
+                if (dcoStr) {
+                    let dt = new Date(dcoStr);
+                    if (!isNaN(dt) && dt.getTime() > maxTime) maxTime = dt.getTime();
+                }
+            });
+
+            // Jadikan data terbaru sebagai "Jangkar Hari Ini"
+            let anchorDate = maxTime > 0 ? new Date(maxTime) : new Date();
+            let opsDate = new Date(anchorDate);
+            
+            // Jika transaksi terakhir terjadi sebelum jam 7 pagi, berarti masih ikut shift operasional kemarin
+            if (opsDate.getHours() < 7) {
+                opsDate.setDate(opsDate.getDate() - 1); 
+            }
+            
+            // Kunci Batas Awal: 07:00:00 
+            let startCutoff = new Date(opsDate.getFullYear(), opsDate.getMonth(), opsDate.getDate(), 7, 0, 0);
+            // Kunci Batas Akhir: 07:00:00 (Hari Besoknya)
+            let endCutoff = new Date(startCutoff);
+            endCutoff.setDate(endCutoff.getDate() + 1);
+            // ==============================================================
+
+            appDataTruckIn = { 
+                BM3: [], PM1: [], CRUMB: [], BU17: [],
+                shiftSummary: {
+                    expPM3: [0,0,0], expPM1: [0,0,0],
+                    locPM3: [0,0,0], locPM1: [0,0,0], locBU17: [0,0,0],
+                    crumb: [0,0,0]
+                }
+            };
             
             data.forEach(row => {
                 const tujuan = String(row['Tujuan'] || '').toUpperCase().trim();
@@ -851,6 +940,38 @@
                 const isNotIntern = !typeRaw.includes('INTERN'); 
                 const isNotDoNo = !typeRaw.includes('DO NO'); 
 
+                // --- LOGIKA HITUNG SUMMARY SHIFT DCO (DENGAN FILTER CUT-OFF) ---
+                if (isSudahDCO) {
+                    let dcoDate = new Date(dco);
+                    
+                    // Filter: HANYA eksekusi jika dcoDate berada di dalam rentang 24 jam operasional
+                    if (!isNaN(dcoDate) && dcoDate >= startCutoff && dcoDate < endCutoff) {
+                        let hour = dcoDate.getHours();
+                        let shiftIdx = 0; // 0: Shift 1, 1: Shift 2, 2: Shift 3
+                        
+                        if (hour >= 7 && hour < 15) shiftIdx = 0;
+                        else if (hour >= 15 && hour < 23) shiftIdx = 1;
+                        else shiftIdx = 2; // Jam 23.00 - 06.59
+
+                        let isExport = typeRaw.includes('EXPORT');
+                        let isLocal = typeRaw.includes('LOCAL');
+
+                        if (gudang.includes('BM3') || gudang.includes('PM3')) {
+                            if (isExport) appDataTruckIn.shiftSummary.expPM3[shiftIdx]++;
+                            if (isLocal) appDataTruckIn.shiftSummary.locPM3[shiftIdx]++;
+                        } else if (gudang.includes('PM1') || gudang.includes('WHITE PAPER')) {
+                            if (isExport) appDataTruckIn.shiftSummary.expPM1[shiftIdx]++;
+                            if (isLocal) appDataTruckIn.shiftSummary.locPM1[shiftIdx]++;
+                        } else if (gudang.includes('BU17')) {
+                            if (isLocal) appDataTruckIn.shiftSummary.locBU17[shiftIdx]++;
+                        } else if (isCrumb) { 
+                            appDataTruckIn.shiftSummary.crumb[shiftIdx]++;
+                        }
+                    }
+                }
+                // --- AKHIR LOGIKA SHIFT ---
+
+                // (Logika pembentukan tabel antrian tetap dipertahankan)
                 if ((isMuat || isCrumb) && isBelumTimbang2 && isSudahDCO && isNotIntern && isNotDoNo) {
                     let isTimbang1Done = (t1 && String(t1).trim() !== '' && String(t1).trim() !== '-');
                     let statusTxt = isTimbang1Done ? 'BELUM TIMBANG 2' : 'PARKIR DCO';
@@ -884,12 +1005,19 @@
                 dataBM3: appDataTruckIn.BM3, 
                 dataPM1: appDataTruckIn.PM1, 
                 dataCRUMB: appDataTruckIn.CRUMB, 
-                dataBU17: appDataTruckIn.BU17
+                dataBU17: appDataTruckIn.BU17,
+                shiftSummary: appDataTruckIn.shiftSummary 
             };
             
+            // MODIFIKASI: Tambahkan .catch untuk error handling loading
             db.collection('history_monitoring').add(payloadData).then(() => { 
                 loadHistoryDropdown(); 
-            }); 
+            }).catch(error => {
+                console.error("Error Upload Firebase: ", error);
+                document.getElementById('loader').style.display = 'none';
+                alert("Gagal mengunggah data ke server. Silakan coba lagi.");
+            });
+
             document.getElementById('fileUpload').value = ''; 
         }
 
@@ -904,11 +1032,102 @@
                 });
                 
                 updateKPIsTruckIn(); 
+                renderShiftSummary(); // Panggil fungsi cetak tabel shift
                 startAutoRefresh();
             } catch(e) {
                 console.error("Rendering Error: ", e);
                 alert("Terjadi kesalahan saat memuat tampilan dashboard.");
             }
+        }
+
+        // --- FUNGSI BARU: Mencetak Tabel Summary Shift ---
+        function renderShiftSummary() {
+            const s = appDataTruckIn.shiftSummary;
+            if (!s) return;
+
+            document.getElementById('shiftSummaryCard').style.display = 'block';
+
+            const sumArray = (arr) => arr.reduce((a, b) => a + b, 0);
+            
+            const rows = [
+                { name: 'Export PM3', data: s.expPM3, class: 'text-success' },
+                { name: 'Export PM1', data: s.expPM1, class: 'text-success' },
+                { name: 'Lokal PM3', data: s.locPM3, class: 'text-primary' },
+                { name: 'Lokal PM1', data: s.locPM1, class: 'text-primary' },
+                { name: 'Lokal BU17', data: s.locBU17, class: 'text-warning text-darken' },
+                { name: 'Lokal Crumb Pulp', data: s.crumb, class: '', style: 'color: #6f42c1;' } 
+            ];
+
+            let html = '';
+            let totalS1 = 0, totalS2 = 0, totalS3 = 0, grandTotal = 0;
+
+            rows.forEach(r => {
+                let rTotal = sumArray(r.data);
+                totalS1 += r.data[0]; totalS2 += r.data[1]; totalS3 += r.data[2];
+                grandTotal += rTotal;
+                
+                let styleAttr = r.style ? `style="${r.style}"` : '';
+
+                html += `<tr>
+                            <td class="text-start fw-bold ${r.class}" ${styleAttr}>${r.name}</td>
+                            <td>${r.data[0]}</td>
+                            <td>${r.data[1]}</td>
+                            <td>${r.data[2]}</td>
+                            <td class="text-dark fw-bold">${rTotal}</td>
+                        </tr>`;
+            });
+
+            html += `<tr style="border-top: 2px solid #dee2e6; background-color: #f8f9fa;">
+                        <td class="text-end text-dark pe-3 fw-bold">TOTAL DCO PER SHIFT</td>
+                        <td class="text-dark fw-bold">${totalS1}</td>
+                        <td class="text-dark fw-bold">${totalS2}</td>
+                        <td class="text-dark fw-bold">${totalS3}</td>
+                        <td class="text-danger fs-5 fw-bold">${grandTotal}</td>
+                    </tr>`;
+
+            document.getElementById('tbodyShiftSummary').innerHTML = html;
+
+            // --- LOGIKA WAKTU UPDATE OTOMATIS ---
+            const now = new Date();
+            const namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+            const namaBulan = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            
+            let hari = namaHari[now.getDay()];
+            let tanggal = now.getDate();
+            let bulan = namaBulan[now.getMonth()];
+            let tahun = now.getFullYear();
+            let jam = String(now.getHours()).padStart(2, '0');
+            let menit = String(now.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('noteShiftUpdate').innerHTML = `<i class="fa-solid fa-info-circle me-1"></i>Data terakhir diperbarui pada: <b>${hari}, ${tanggal} ${bulan} ${tahun} - Pukul ${jam}:${menit} WIB</b>`;
+        }
+
+        // ==========================================
+        // FUNGSI DOWNLOAD GAMBAR SHIFT SUMMARY
+        // ==========================================
+        function downloadImageShiftSummary() {
+            const element = document.getElementById('shiftSummaryCard');
+            const actionBtn = element.querySelector('.action-btn-shift');
+            
+            document.getElementById('loaderText').innerText = "Membuat Gambar Laporan Shift..."; 
+            document.getElementById('loader').style.display = 'flex'; 
+            
+            // Sembunyikan tombol saat proses screenshot agar rapi
+            actionBtn.style.display = 'none'; 
+
+            setTimeout(() => {
+                html2canvas(element, { scale: 3, backgroundColor: '#ffffff', useCORS: true }).then(canvas => { 
+                    // Tampilkan kembali tombolnya
+                    actionBtn.style.display = 'inline-block'; 
+                    document.getElementById('loader').style.display = 'none';
+                    
+                    // Simpan gambar
+                    const link = document.createElement('a'); 
+                    link.download = `Laporan_Shift_DCO_${new Date().getTime()}.png`; 
+                    link.href = canvas.toDataURL('image/png'); 
+                    link.click();
+                });
+            }, 800);
         }
 
         // ==========================================
@@ -1514,8 +1733,8 @@
                             if (size) {
                                 let emklMaster = mapEMKLName(ekpedisiRaw);
                                 
-                                // FIX DARI SINI: Mencari Data Target Baris HANYA Berdasarkan DN sebagai Trigger.
-                                let rowTarget = bocTableData[pm].find(x => x.dn.toUpperCase() === sj);
+                                // FIX: Pencocokan Ganda Berdasarkan DN DAN Nama EMKL agar tidak salah masuk ke Ekspedisi lain
+                                let rowTarget = bocTableData[pm].find(x => x.dn.toUpperCase() === sj && x.emkl === emklMaster);                               
                                 
                                 if (!rowTarget) {
                                     rowTarget = { 
@@ -1573,7 +1792,15 @@
                 plan_pm1_tot: parseInt(document.getElementById('plan_pm1_tot').value) || 0
             };
 
-            db.collection('history_boc_export').add(payloadData).then(() => { loadBocByDate(); });
+            // MODIFIKASI: Tambahkan .catch
+            db.collection('history_boc_export').add(payloadData).then(() => { 
+                loadBocByDate(); 
+            }).catch(error => {
+                console.error("Error Upload BOC Firebase: ", error);
+                document.getElementById('loader').style.display = 'none';
+                alert("Gagal mengunggah data BOC ke server. Silakan coba lagi.");
+            });
+
             document.getElementById('fileUpload').value = ''; 
         }
 
@@ -1641,40 +1868,7 @@
         // ==========================================
         // EXCEL TRUCK IN UPLOAD BERCABANG (UPLOAD FILE)
         // ==========================================
-        document.getElementById('fileUpload').addEventListener('change', function(e) {
-            const file = e.target.files[0]; if(!file) return;
-            document.getElementById('loader').style.display = 'flex'; document.getElementById('loaderText').innerText = `Membaca Data Excel & Menyimpan ke Database ${currentActiveMenu === 'truckIn' ? 'Truck IN' : 'BOC Export'}...`;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                try {
-                    const workbook = XLSX.read(evt.target.result, {type: 'binary'});
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    
-                    let headerRowIndex = 0;
-                    for(let i = 0; i < aoa.length; i++) {
-                        if (aoa[i] && aoa[i].length > 0) {
-                            let rowStr = aoa[i].join('').toUpperCase();
-                            if (rowStr.includes('NO IML') || rowStr.includes('NO POLISI') || rowStr.includes('TANGGAL')) { 
-                                headerRowIndex = i; break; 
-                            }
-                        }
-                    }
-                    
-                    const rawData = XLSX.utils.sheet_to_json(sheet, { range: headerRowIndex, defval: "" });
-                    
-                    if (currentActiveMenu === 'truckIn') {
-                        processDataTruckIn(rawData, file.name);
-                    } else if (currentActiveMenu === 'bocExport') {
-                        processDataBocExport(rawData, file.name);
-                    }
-                } catch(error) {
-                    console.error(error); alert("Gagal memproses file Excel.");
-                    document.getElementById('loader').style.display = 'none';
-                }
-            };
-            reader.readAsBinaryString(file);
-        });
+
 
         // ==========================================
         // SUB-FUNCTIONS TRUCK IN (Tables, KPI)
